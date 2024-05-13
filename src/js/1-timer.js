@@ -1,9 +1,8 @@
-// Описаний в документації
 import flatpickr from 'flatpickr';
-// Додатковий імпорт стилів
 import 'flatpickr/dist/flatpickr.min.css';
 
-flatpickr('#datetime-picker', options);
+import iziToast from 'izitoast';
+import 'izitoast/dist/css/iziToast.min.css';
 
 const options = {
   enableTime: true,
@@ -14,7 +13,8 @@ const options = {
     console.log(selectedDates[0]);
   },
 };
-let userSelectedDate = new Date(options.onClose);
+
+flatpickr('#datetime-picker', options);
 
 const startButton = document.querySelector('[data-start]');
 const dateTimePicker = document.getElementById('datetime-picker');
@@ -22,8 +22,9 @@ const dateTimePicker = document.getElementById('datetime-picker');
 dateTimePicker.addEventListener('change', () => {
   const selectedDate = new Date(dateTimePicker.value);
   if (selectedDate <= new Date()) {
-    iziToast.show({
-      title: 'Hey',
+    startButton.disabled = true;
+    iziToast.error({
+      title: 'Error',
       message: 'Please choose a date in the future',
     });
   } else {
@@ -32,6 +33,7 @@ dateTimePicker.addEventListener('change', () => {
 });
 
 let countdown;
+
 startButton.addEventListener('click', () => {
   startButton.disabled = true;
   dateTimePicker.disabled = true;
@@ -41,17 +43,27 @@ startButton.addEventListener('click', () => {
 
   countdown = setInterval(() => {
     const now = new Date().getTime();
-    const different = selectedDate - now;
+    const distance = selectedDate - now;
 
-    if (different <= 0) {
+    if (distance <= 0) {
       clearInterval(countdown);
       updateTime(0);
       dateTimePicker.disabled = false;
     } else {
-      updateTime(different);
+      updateTime(distance);
     }
   }, 1000);
 });
+
+function updateTime(ms) {
+  const { days, hours, minutes, seconds } = convertMs(ms);
+  document.querySelector('[data-days]').textContent = addLeadingZero(days);
+  document.querySelector('[data-hours]').textContent = addLeadingZero(hours);
+  document.querySelector('[data-minutes]').textContent =
+    addLeadingZero(minutes);
+  document.querySelector('[data-seconds]').textContent =
+    addLeadingZero(seconds);
+}
 
 function convertMs(ms) {
   const second = 1000;
@@ -67,11 +79,6 @@ function convertMs(ms) {
   return { days, hours, minutes, seconds };
 }
 
-console.log(convertMs(2000)); // {days: 0, hours: 0, minutes: 0, seconds: 2}
-console.log(convertMs(140000)); // {days: 0, hours: 0, minutes: 2, seconds: 20}
-console.log(convertMs(24140000)); // {days: 0, hours: 6 minutes: 42, seconds: 20}
-
-function updateTime(ms) {
-  const { days, hours, minutes, seconds } = convertMs;
-  document.querySelector('[data-days]').textContent = addLeadingZero(days);
+function addLeadingZero(value) {
+  return value < 10 ? `0${value}` : value;
 }
